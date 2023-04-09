@@ -7,13 +7,15 @@ using System.IO.Ports;
 using System.Numerics;
 using System.Text.Json.Serialization;
 using System.Threading;
+using System.Linq;
 using Twilio;
 using Twilio.Rest.Api.V2010.Account;
+using Google.Cloud.BigQuery.V2;
 
-public class PortChat
+public class AtTheWheel
 {
     static bool _continue;
-    static SerialPort _serialPort;
+    static SerialPort _sp;
 
     static BigInteger risk = 0;
 
@@ -25,21 +27,21 @@ public class PortChat
         Thread readThread = new Thread(Read);
 
         // Create a new SerialPort object with default settings.
-        _serialPort = new SerialPort();
+        _sp = new SerialPort();
 
         // Allow the user to set the appropriate properties.
-        _serialPort.PortName = "COM3";
-        _serialPort.BaudRate = 9600;
-        _serialPort.Parity = System.IO.Ports.Parity.None;
-        _serialPort.DataBits = 8;
-        _serialPort.StopBits = System.IO.Ports.StopBits.One;
-        _serialPort.Handshake = System.IO.Ports.Handshake.None;
+        _sp.PortName = "COM3";
+        _sp.BaudRate = 9600;
+        _sp.Parity = System.IO.Ports.Parity.None;
+        _sp.DataBits = 8;
+        _sp.StopBits = System.IO.Ports.StopBits.One;
+        _sp.Handshake = System.IO.Ports.Handshake.None;
 
         // Set the read/write timeouts
-        _serialPort.ReadTimeout = 500;
-        _serialPort.WriteTimeout = 500;
+        _sp.ReadTimeout = 500;
+        _sp.WriteTimeout = 500;
 
-        _serialPort.Open();
+        _sp.Open();
         _continue = true;
         readThread.Start();
 
@@ -57,14 +59,13 @@ public class PortChat
             }
             else
             {
-                _serialPort.WriteLine(
+                _sp.WriteLine(
                     String.Format("<{0}>: {1}", name, message));
             }
         }
 
         readThread.Join();
-        _serialPort.Close();
-        //sendMsg();
+        _sp.Close();
     }
 
     public static void sendMsg()
@@ -90,7 +91,7 @@ public class PortChat
         {
             try
             {
-                string message = _serialPort.ReadLine();
+                string message = _sp.ReadLine();
                 if (message.Contains("RISK: "))
                 {
                     string[] riskArg = message.Split(" ");
