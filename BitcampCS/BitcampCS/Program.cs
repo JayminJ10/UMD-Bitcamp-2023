@@ -11,6 +11,8 @@ using System.Linq;
 using Twilio;
 using Twilio.Rest.Api.V2010.Account;
 using Google.Cloud.BigQuery.V2;
+using Google.Apis.Bigquery.v2.Data;
+using Google.Api.Gax;
 
 public class AtTheWheel
 {
@@ -44,6 +46,7 @@ public class AtTheWheel
         _sp.Open();
         _continue = true;
         readThread.Start();
+        EnvLoad.loadEnv();
 
         name = "Bitcamp";
 
@@ -68,9 +71,53 @@ public class AtTheWheel
         _sp.Close();
     }
 
+    public static void ListTables(
+        string projectId = "",
+        string datasetId = "testID"
+    )
+    {
+        projectId = Environment.GetEnvironmentVariable("GOOGLE_PROJECT_ID");
+
+        BigQueryClient client = BigQueryClient.Create(projectId);
+        TableReference tableReference = new TableReference()
+        {
+            TableId = "employee",
+            DatasetId = "testID",
+            ProjectId = projectId
+        };
+        // Load all rows from a table
+        PagedEnumerable<TableDataList, BigQueryRow> result = client.ListRows(
+            tableReference: tableReference,
+            schema: null
+        );
+        // Print the first 10 rows
+        Console.WriteLine("Name  |  Risk");
+        Console.WriteLine("_____________");
+        foreach (BigQueryRow row in result.Take(10))
+        {
+            Console.WriteLine($"{row["first_name"]}: {row["risk"]}");
+        }
+        Console.WriteLine("\n\n");
+        // Retrieve list of tables in the dataset
+        List<BigQueryTable> tables = client.ListTables(datasetId).ToList();
+        // Display the results
+        if (tables.Count > 0)
+        {
+            Console.WriteLine($"Tables in dataset {datasetId}:");
+            foreach (var table in tables)
+            {
+                Console.WriteLine($"\t{table.Reference.TableId}");
+            }
+        }
+        else
+        {
+            Console.WriteLine($"{datasetId} does not contain any tables.");
+        }
+    }
+
     public static void sendMsg()
     {
-        EnvLoad.loadEnv();
+        
         string accountSid = Environment.GetEnvironmentVariable("TWILIO_ACCOUNT_SID");
         string authToken = Environment.GetEnvironmentVariable("TWILIO_AUTH_TOKEN");
 
@@ -82,7 +129,7 @@ public class AtTheWheel
             to: new Twilio.Types.PhoneNumber("+12027386228")
         );
         
-        Console.WriteLine(message.Sid);
+        Console.WriteLine();
     }
 
     public static void Read()
@@ -104,7 +151,11 @@ public class AtTheWheel
                 }
                 if (risk == 3)
                 {
+                    Console.WriteLine("3rd time doze-off detected. Alerting emergency contact.");
                     sendMsg();
+                    Console.WriteLine("Google Cloud BigQuery Table Data:");
+                    ListTables();
+
                     Environment.Exit(1);
                 }
             }
