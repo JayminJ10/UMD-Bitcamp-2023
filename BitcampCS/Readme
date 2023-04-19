@@ -1,0 +1,10 @@
+Requires a seperate class to set ENV variables. Class should look like this:
+
+internal class EnvLoad {
+  public static void loadEnv() {
+    Environment.SetEnvironmentVariable("TWILIO_ACCOUNT_SID", "YOUR_ACCOUNT_SSID_HERE", EnvironmentVariableTarget.Process);
+    Environment.SetEnvironmentVariable("TWILIO_AUTH_TOKEN", "YOUR_AUTH_KEY_HERE", EnvironmentVariableTarget.Process);
+    Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", "YOUR_KEY_HERE.json", EnvironmentVariableTarget.Process);
+    Environment.SetEnvironmentVariable("GOOGLE_PROJECT_ID", "YOUR_ID_HERE", EnvironmentVariableTarget.Process);
+  }
+}
